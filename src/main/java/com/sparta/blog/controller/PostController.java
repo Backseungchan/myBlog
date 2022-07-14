@@ -1,11 +1,12 @@
 package com.sparta.blog.controller;
 
 import com.sparta.blog.models.Post;
-import com.sparta.blog.models.PostRepository;
+import com.sparta.blog.repository.PostRepository;
 import com.sparta.blog.models.PostRequestDto;
+import com.sparta.blog.security.UserDetailsImpl;
 import com.sparta.blog.service.PostService;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +19,9 @@ public class PostController {
 
     //Create
     @PostMapping("/api/posts")
-    public Post createPost(@RequestBody PostRequestDto requestDto){
-        Post post = new Post(requestDto);
+    public Post createPost(@RequestBody PostRequestDto requestDto, @AuthenticationPrincipal UserDetailsImpl userDetails){
+        String username = userDetails.getUsername();
+        Post post = new Post(requestDto, username);
         postRepository.save(post);
         return post;
     }
@@ -28,6 +30,12 @@ public class PostController {
     @GetMapping("/api/posts")
     public List<Post> getPosts(){
         return postRepository.findAllByOrderByModifiedAtDesc();
+    }
+
+    //Read only One
+    @GetMapping("/api/posts/{postId}")
+    public Post getPost(@PathVariable Long postId){
+        return postService.getPost(postId);
     }
 
     //Update

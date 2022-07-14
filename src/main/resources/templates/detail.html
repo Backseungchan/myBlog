@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -93,15 +92,6 @@
             color: #ffffff;
         }
 
-        #title {
-            margin-bottom: 10px;
-            padding: 18px;
-            width: 502px;
-            border-radius: 5px;
-            background-color: #ffffff;
-            border: none;
-        }
-
         textarea.field {
             width: 502px !important;
             height: 146px;
@@ -112,7 +102,7 @@
             resize: none;
         }
 
-        textarea.field::placeholder #title::placeholder{
+        textarea.field::placeholder {
             width: 216px;
             height: 16px;
             font-family: 'Noto Sans KR', sans-serif;
@@ -157,11 +147,8 @@
 
         }
 
-        .title {
-            padding: 0px 23px;
-            padding-top: 10px;
-            word-wrap: break-word;
-            word-break: break-all;
+        .card .metadata .username {
+            margin-left: 20px;
         }
 
         .contents {
@@ -170,21 +157,8 @@
             word-break: break-all;
         }
 
-        .title div.edit {
-            display: none;
-        }
-
         .contents div.edit {
             display: none;
-        }
-
-        .title input.te-edit {
-            border-right: none;
-            border-top: none;
-            border-left: none;
-            resize: none;
-            width: 100%;
-            font-family: 'Spoqa Han Sans';
         }
 
         .contents textarea.te-edit {
@@ -233,6 +207,14 @@
         #cards-box {
             margin-top: 12px;
         }
+
+        #menu {
+            display: flex;
+        }
+
+        #home-a{
+            margin-left: auto;
+        }
     </style>
     <script>
         // 미리 작성된 영역 - 수정하지 않으셔도 됩니다.
@@ -249,87 +231,96 @@
             return true;
         }
 
-
         // 수정 버튼을 눌렀을 때, 기존 작성 내용을 textarea 에 전달합니다.
         // 숨길 버튼을 숨기고, 나타낼 버튼을 나타냅니다.
-        function editPost(id) {
+        function editReply(id) {
             showEdits(id);
-            let title = $(`#${id}-title`).text().trim();
             let contents = $(`#${id}-contents`).text().trim();
-
-            console.log(title ,contents);
-
-            $(`#${id}-inputarea`).val(title);
             $(`#${id}-textarea`).val(contents);
         }
 
         function showEdits(id) {
-            $(`#${id}-edit-titlearea`).show();
             $(`#${id}-editarea`).show();
             $(`#${id}-submit`).show();
             $(`#${id}-delete`).show();
 
-            $(`#${id}-title`).hide();
             $(`#${id}-contents`).hide();
             $(`#${id}-edit`).hide();
         }
 
         function hideEdits(id) {
-            $(`#${id}-edit-titlearea`).hide();
             $(`#${id}-editarea`).hide();
             $(`#${id}-submit`).hide();
             $(`#${id}-delete`).hide();
 
-            $(`#${id}-title`).show();
             $(`#${id}-contents`).show();
             $(`#${id}-edit`).show();
         }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // 여기서부터 코드를 작성해주시면 됩니다.
 
         $(document).ready(function () {
             // HTML 문서를 로드할 때마다 실행합니다.
-            getMessages();
+            const urlParams = new URLSearchParams(window.location.search);
+            let postId = urlParams.get('id');
+            getMessages(postId);
+            getReplys(postId);
         })
 
-        // 메모를 불러와서 보여줍니다.
-        function getMessages() {
+        // 게시글을 불러와서 보여줍니다.
+        function getMessages(postId) {
+            // 1. 기존 메모 내용을 지웁니다.
+            $('h2').empty();
+            $('p').empty();
+            // 2. 메모 목록을 불러와서 HTML로 붙입니다.
+            $.ajax({
+                type: 'GET',
+                url: `/api/posts/${postId}`,
+                success: function (response) {
+                        let title = response['title'];
+                        let contents = response['contents'];
+                        $('h2').append(title);
+                        $('p').append(contents);
+                }
+            })
+        }
+
+        // 댓글을 불러와서 보여줍니다.
+        function getReplys(postId) {
             // 1. 기존 메모 내용을 지웁니다.
             $('#cards-box').empty();
             // 2. 메모 목록을 불러와서 HTML로 붙입니다.
             $.ajax({
                 type: 'GET',
-                url: '/api/posts',
+                url: `/api/replys/${postId}`,
                 success: function (response) {
                     for (let i = 0; i < response.length; i++) {
                         let message = response[i];
                         let id = message['id'];
-                        let title = message['title'];
+                        let username = message['username'];
                         let contents = message['contents'];
                         let createdAt = message['createdAt'];
                         let modifiedAt = message['modifiedAt'];
-                        addHTML(id, title, contents, createdAt, modifiedAt);
+                        addHTML(id, username, contents, createdAt, modifiedAt);
                     }
                 }
             })
         }
 
         // 메모 하나를 HTML로 만들어서 body 태그 내 원하는 곳에 붙입니다.
-        function addHTML(id, title, contents, createdAt, modifiedAt) {
+        function addHTML(id, username, contents, createdAt, modifiedAt) {
+            // 1. HTML 태그를 만듭니다.
             let tempHtml = `<div class="card">
-        <div class="title">
-            <div id="${id}-title" class="text">
-                ${title}
-            </div>
-            <div id="${id}-edit-titlearea" class="edit">
-                <input type="text" id="${id}-inputarea" class="te-edit">
-            </div>
-        </div>
-        <!-- date 영역 -->
+        <!-- date/username 영역 -->
         <div class="metadata">
             <div class="date">
-                작성: ${createdAt}
-            </div>
-            <div class="date">
-                수정: ${modifiedAt}
+                    작성: ${createdAt}
+                </div>
+                <div class="date">
+                    수정: ${modifiedAt}
+                </div>
+            <div id="${id}-username" class="username">
+                작성자 : ${username}
             </div>
         </div>
         <!-- contents 조회/수정 영역-->
@@ -343,21 +334,19 @@
         </div>
         <!-- 버튼 영역-->
         <div class="footer">
-            <img id="${id}-edit" class="icon-start-edit" src="images/edit.png" alt="" onclick="editPost('${id}')">
-            <img id="${id}-delete" class="icon-delete" src="images/delete.png" alt="" onclick="deleteOne('${id}')">
-            <img id="${id}-submit" class="icon-end-edit" src="images/done.png" alt="" onclick="submitEdit('${id}')">
+            ${[[${uid}]]!=username ? `` : `<img id="${id}-edit" class="icon-start-edit" src="../images/edit.png" alt="" onclick="editReply('${id}')">
+            <img id="${id}-delete" class="icon-delete" src="../images/delete.png" alt="" onclick="deleteOne('${id}')">
+            <img id="${id}-submit" class="icon-end-edit" src="../images/done.png" alt="" onclick="submitEdit('${id}')">`}
         </div>
     </div>`;
-            // 1. HTML 태그를 만듭니다.
             // 2. #cards-box 에 HTML을 붙인다.
             $('#cards-box').append(tempHtml);
         }
 
         // 메모를 생성합니다.
         // 메모를 생성합니다.
-        function writePost() {
-            // 1. 작성한 메모를 불러옵니다.
-            let title = $('#title').val();
+        function writeReply() {
+            // 1. 작성한 댓글을 불러옵니다.
             let contents = $('#contents').val();
 
             // 2. 작성한 메모가 올바른지 isValidContents 함수를 통해 확인합니다.
@@ -365,17 +354,19 @@
                 return;
             }
 
-            // 4. 전달할 data JSON으로 만듭니다.
-            let data = {'title': title, 'contents': contents};
+            // 3. 전달할 data JSON으로 만듭니다.
+            const urlParams = new URLSearchParams(window.location.search);
+            let postId = urlParams.get('id');
+            let data = {'postId': postId, 'contents': contents};
 
             // 5. POST /api/memos 에 data를 전달합니다.
             $.ajax({
                 type: "POST",
-                url: "/api/posts",
+                url: "/api/replys",
                 contentType: "application/json",
                 data: JSON.stringify(data),
                 success: function (response) {
-                    alert('글이 성공적으로 작성되었습니다.');
+                    alert('메시지가 성공적으로 작성되었습니다.');
                     window.location.reload();
                 }
             });
@@ -383,8 +374,7 @@
 
         // 메모를 수정합니다.
         function submitEdit(id) {
-            // 1. 작성 대상 메모의 title과 contents 를 확인합니다.
-            let title = $(`#${id}-inputarea`).val().trim();
+            // 1. 작성 대상 댓글의 contents 를 확인합니다.
             let contents = $(`#${id}-textarea`).val().trim();
 
             // 2. 작성한 메모가 올바른지 isValidContents 함수를 통해 확인합니다.
@@ -393,16 +383,18 @@
             }
 
             // 3. 전달할 data JSON으로 만듭니다.
-            let data = {'title': title, 'contents': contents};
+            const urlParams = new URLSearchParams(window.location.search);
+            let postId = urlParams.get('id');
+            let data = {'postId': postId, 'contents': contents};
 
-            // 4. PUT /api/memos/{id} 에 data를 전달합니다.
+            // 4. PUT /api/replys/{id} 에 data를 전달합니다.
             $.ajax({
-                type: "POST",
-                url: `/api/posts/${id}`,
+                type: "PUT",
+                url: `/api/replys/${id}`,
                 contentType: "application/json",
                 data: JSON.stringify(data),
                 success: function (response) {
-                    alert('글 변경에 성공하였습니다.');
+                    alert('댓글 변경에 성공하였습니다.');
                     window.location.reload();
                 }
             });
@@ -411,9 +403,9 @@
         function deleteOne(id) {
             $.ajax({
                 type: "DELETE",
-                url: `/api/posts/${id}`,
+                url: `/api/replys/${id}`,
                 success: function (response) {
-                    alert('글 삭제에 성공하였습니다.');
+                    alert('댓글 삭제에 성공하였습니다.');
                     window.location.reload();
                 }
             })
@@ -430,17 +422,19 @@
 </div>
 <div class="wrap">
     <div class="header">
-        <h2>나만의 블로그</h2>
+        <h2>상세 페이지</h2>
         <p>
-            제목과 내용으로 작성해주세요~!
+            댓글을 작성해주세요
         </p>
+        <div id="menu" >
+            <a id="home-a" onclick="window.location = '/';">Home</a>
+        </div>
     </div>
+
     <div class="area-write">
-        <input type="text" id="title" placeholder="제목을 입력해주세요">
-        <textarea class="field" placeholder="내용을 입력해주세요" name="contents" id="contents" cols="30"
+        <textarea class="field" placeholder="댓글을 입력해주세요" name="contents" id="contents" cols="30"
                   rows="10"></textarea>
-        <!--            <button class="btn btn-danger" onclick="writePost()">작성하기</button>-->
-        <img src="images/send.png" alt="" onclick="writePost()">
+        <img src="../images/send.png" alt="" onclick="writeReply()">
     </div>
     <div id="cards-box" class="area-read">
     </div>

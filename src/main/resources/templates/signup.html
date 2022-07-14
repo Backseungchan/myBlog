@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <meta charset="UTF-8">
+    <title>회원가입 페이지</title>]
+    <script>
+
+        function signup(){
+            var username = $("#username").val();
+            var password = $("#password").val();
+            var password2 = $("#password2").val();
+            var email = $("#email").val();
+
+            let data = {
+                'username': username,
+                'password': password,
+                'password2': password2,
+                'email': email
+            };
+
+            $.ajax({
+                type : 'POST',
+                url : '/user/signup',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success : function(response){
+                    alert(response["username"]+"님 회원가입 축하드립니다!");
+                    window.location.replace("/user/login");
+                },
+                error : function(response){
+                    if(response.responseJSON && response.responseJSON.errorMessage){
+                        alert(response.responseJSON.errorMessage);
+                    }else{
+                        alert("알수 없는 에러");
+                    }
+                    window.location.reload();
+                }
+            });
+
+        }
+
+    </script>
+</head>
+<body>
+<div id="login-form">
+    <div id="login-title">Sign up My Blog</div>
+
+    <div>
+        <div class="login-id-label">Username</div>
+        <input type="text" id="username" name="username" placeholder="3자 이상, 알파벳 또는 숫자만 입력해주세요." class="login-input-box">
+
+        <div class="login-id-label">Password</div>
+        <input type="password" id="password" name="password" placeholder="4자 이상, Username를 포함하지 마세요." class="login-input-box">
+
+        <div class="login-id-label">Password check</div>
+        <input type="password" id="password2" name="password2" placeholder="password와 동일하게 작성하세요." class="login-input-box">
+
+        <div class="login-id-label">E-mail</div>
+        <input type="text" name="email" id="email" placeholder="E-mail" class="login-input-box">
+        <button id="login-id-submit" onclick="signup()">회원 가입</button>
+    </div>
+</div>
+</body>
+</html>

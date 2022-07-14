@@ -2,33 +2,35 @@ package com.sparta.blog.models;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 
-@NoArgsConstructor
 @Getter
+@Setter
 @Entity
-public class Post extends TimeStamped{
-
+@NoArgsConstructor
+public class Reply extends TimeStamped{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
+
+    @Column(nullable = false)
+    private Long postId;
+
     @Column(nullable = false)
     private String username;
-    @Column(nullable = false)
-    private String title;
 
     @Column(nullable = false)
     private String contents;
 
-    public Post(PostRequestDto requestDto, String username){
+    public Reply(ReplyRequestDto requestDto, String username) {
+        this.postId = requestDto.getPostId();
         this.username = username;
-        this.title = requestDto.getTitle();
         this.contents = requestDto.getContents();
     }
 
-    public void update(PostRequestDto requestDto){
-        title = requestDto.getTitle();
+    public void update(ReplyRequestDto requestDto) {
         contents = requestDto.getContents();
     }
 }
